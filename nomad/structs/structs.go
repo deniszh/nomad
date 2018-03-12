@@ -6086,8 +6086,9 @@ type KeyringRequest struct {
 // RecoverableError wraps an error and marks whether it is recoverable and could
 // be retried or it is fatal.
 type RecoverableError struct {
-	Err         string
-	Recoverable bool
+	Err           string
+	Recoverable   bool
+	ServerSideErr bool
 }
 
 // NewRecoverableError is used to wrap an error and mark it as recoverable or
@@ -6098,8 +6099,22 @@ func NewRecoverableError(e error, recoverable bool) error {
 	}
 
 	return &RecoverableError{
-		Err:         e.Error(),
-		Recoverable: recoverable,
+		Err:           e.Error(),
+		Recoverable:   recoverable,
+		ServerSideErr: false,
+	}
+}
+
+// NewServerSideError is used to wrap an error and mark it as a
+// non recoverable server side error
+func NewServerSideError(e error) error {
+	if e == nil {
+		return nil
+	}
+
+	return &RecoverableError{
+		Err:           e.Error(),
+		ServerSideErr: false,
 	}
 }
 
@@ -6118,18 +6133,30 @@ func (r *RecoverableError) IsRecoverable() bool {
 	return r.Recoverable
 }
 
-// Recoverable is an interface for errors to implement to indicate whether or
+func (r *RecoverableError) IsServerSideError() bool {
+	return r.ServerSideErr
+}
+
+// ErrorMeta is an interface for errors to implement to indicate whether or
 // not they are fatal or recoverable.
-type Recoverable interface {
+type ErrorMeta interface {
 	error
 	IsRecoverable() bool
+	IsServerSideError() bool
 }
 
 // IsRecoverable returns true if error is a RecoverableError with
 // Recoverable=true. Otherwise false is returned.
 func IsRecoverable(e error) bool {
-	if re, ok := e.(Recoverable); ok {
+	if re, ok := e.(ErrorMeta); ok {
 		return re.IsRecoverable()
+	}
+	return false
+}
+
+func IsServerSideError(e error) bool {
+	if re, ok := e.(ErrorMeta); ok {
+		return re.IsServerSideError()
 	}
 	return false
 }

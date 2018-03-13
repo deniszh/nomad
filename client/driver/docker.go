@@ -815,7 +815,7 @@ func (d *DockerDriver) Start(ctx *ExecContext, task *structs.Task) (*StartRespon
 		doneCh:         make(chan bool),
 		waitCh:         make(chan *dstructs.WaitResult, 1),
 	}
-	go h.collectStats()
+	// go h.collectStats()
 	go h.run()
 
 	// Detect container address
@@ -1593,7 +1593,7 @@ func (d *DockerDriver) Open(ctx *ExecContext, handleID string) (DriverHandle, er
 		doneCh:         make(chan bool),
 		waitCh:         make(chan *dstructs.WaitResult, 1),
 	}
-	go h.collectStats()
+	// go h.collectStats()
 	go h.run()
 	return h, nil
 }
